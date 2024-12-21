@@ -2,8 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\FetchGuardianArticles;
+use App\Jobs\FetchNewYorkTimesArticles;
+use App\Models\Article;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -25,35 +29,45 @@ class PollNewYorkTimes extends Command
 
     /**
      * Execute the console command.
+     * @throws \Throwable
      */
     public function handle(): void
     {
-        $response = Http::get(config('services.new-york-times.url') . 'articlesearch.json', [
+        $latestDate = Article::latest()
+            ->where('source', 'new-york-times')
+            ->first()?->created_at;
+
+        # Only fetch after 24 hours have passed since last fetch
+        if ($latestDate && abs(now()->diffInHours()) < 24) {
+            return;
+        }
+
+        $params = [
             'api-key' => config('services.new-york-times.key'),
-            'fq' => 'type_of_material:("News")'
-        ]);
+            'begin_date' => ($latestDate ?? now()->subDay())->format('Ymd'),
+            'end_date' => now()->format('Ymd'),
+            'sort' => 'newest',
+            'page' => 0,
+            'fq' => 'type_of_material:("News")',
+        ];
+
+        $response = Http::get(config('services.new-york-times.url') . 'articlesearch.json', $params);
 
         if (!$response->successful()) {
             return;
         }
 
-        $results = $response->json()['response']['docs'];
+        $perPage = 10;
+        $totalResults = $response->json()['response']['meta']['hits'];
+        $pages = ceil($totalResults / $perPage);
 
-        if (!count($results)) {
-            return;
-        }
+        $jobs = collect(range(1, $pages))->map(function ($page, $i) use ($params) {
+            return (new FetchNewYorkTimesArticles([
+                ...$params,
+                'page' => $page
+            ]))->delay(now()->addSeconds($i + 1));
+        });
 
-        $data = collect($results)->map(function ($result) {
-            return [
-                'title' => $result['headline']['main'],
-                'slug' => $result['_id'],
-                'source' => 'new-york-times',
-                'category' => $result['section_name'],
-                'created_at' => Carbon::parse($result['pub_date']),
-                'updated_at' => Carbon::parse($result['pub_date']),
-            ];
-        })->toArray();
-
-        DB::table('articles')->insert($data);
+        Bus::batch($jobs)->dispatch();
     }
 }
