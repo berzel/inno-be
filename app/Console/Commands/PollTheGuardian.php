@@ -3,9 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Jobs\FetchGuardianArticles;
-use App\Models\Article;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -31,18 +32,21 @@ class PollTheGuardian extends Command
      */
     public function handle(): void
     {
-        $latestDate = Article::latest()
-            ->where('source', 'the-guardian')
-            ->first()?->created_at;
+        $lastBatch = DB::table('job_batches')
+            ->where('name', 'poll-guardian')
+            ->whereNotNull('finished_at')
+            ->orderByDesc('finished_at')
+            ->first();
 
-        # Only fetch after 24 hours have passed since last fetch
-        if ($latestDate && abs(now()->diffInHours()) < 24) {
+        $latestDate = Carbon::parse($lastBatch?->finished_at);
+
+        if ($lastBatch && abs(now()->diffInMinutes($latestDate)) < 5) {
             return;
         }
 
         $params = [
             'api-key' => config('services.the-guardian.key'),
-            'from-date' => ($latestDate ?? now()->subDay())->format('Y-m-d'),
+            'from-date' =>now()->subDay()->format('Y-m-d'),
             'to-date' => now()->format('Y-m-d'),
             'order-by' => 'newest',
             'page-size' => 50,
@@ -64,6 +68,6 @@ class PollTheGuardian extends Command
             ]))->delay(now()->addSeconds($i + 1));
         });
 
-        Bus::batch($jobs)->dispatch();
+        Bus::batch($jobs)->name('poll-guardian')->dispatch();
     }
 }

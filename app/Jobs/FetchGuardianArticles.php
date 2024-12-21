@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Article;
 use Carbon\Carbon;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -59,7 +60,9 @@ class FetchGuardianArticles implements ShouldQueue
                 'created_at' => Carbon::parse($result['webPublicationDate']),
                 'updated_at' => Carbon::parse($result['webPublicationDate']),
             ];
-        })->toArray();
+        })
+            ->filter(fn($item) => !Article::whereSlug($item['slug'])->exists())
+            ->toArray();
 
         DB::table('articles')->insert($data);
     }

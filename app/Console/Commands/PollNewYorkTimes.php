@@ -33,18 +33,21 @@ class PollNewYorkTimes extends Command
      */
     public function handle(): void
     {
-        $latestDate = Article::latest()
-            ->where('source', 'new-york-times')
-            ->first()?->created_at;
+        $lastBatch = DB::table('job_batches')
+            ->where('name', 'poll-nyt')
+            ->whereNotNull('finished_at')
+            ->orderByDesc('finished_at')
+            ->first();
 
-        # Only fetch after 24 hours have passed since last fetch
-        if ($latestDate && abs(now()->diffInHours()) < 24) {
+        $latestDate = Carbon::parse($lastBatch?->finished_at);
+
+        if ($lastBatch && abs(now()->diffInMinutes($latestDate)) < 5) {
             return;
         }
 
         $params = [
             'api-key' => config('services.new-york-times.key'),
-            'begin_date' => ($latestDate ?? now()->subDay())->format('Ymd'),
+            'begin_date' => now()->subDay()->format('Ymd'),
             'end_date' => now()->format('Ymd'),
             'sort' => 'newest',
             'page' => 0,
@@ -68,6 +71,6 @@ class PollNewYorkTimes extends Command
             ]))->delay(now()->addSeconds($i + 1));
         });
 
-        Bus::batch($jobs)->dispatch();
+        Bus::batch($jobs)->name('poll-nyt')->dispatch();
     }
 }
