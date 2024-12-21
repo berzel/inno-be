@@ -24,6 +24,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'preferred_sources',
+        'preferred_categories'
     ];
 
     /**
@@ -49,17 +51,19 @@ class User extends Authenticatable
         ];
     }
 
-    public function prefferedCategories(): Attribute
+    protected function preferredCategories(): Attribute
     {
         return Attribute::make(
-            get: fn() => explode(',', $this->preferred_categories)
+            get: fn (string $value) => explode(',', $value),
+            set: fn ($value) => is_array($value) ? implode(',', $value) : $value,
         );
     }
 
-    public function prefferedSources(): Attribute
+    protected function preferredSources(): Attribute
     {
         return Attribute::make(
-            get: fn() => explode(',', $this->preferred_sources)
+            get: fn (string $value) => explode(',', $value),
+            set: fn ($value) => is_array($value) ? implode(',', $value) : $value,
         );
     }
 }

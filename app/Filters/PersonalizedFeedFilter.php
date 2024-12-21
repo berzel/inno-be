@@ -27,11 +27,11 @@
           return $query;
         }
 
-        if ($categories = $this->request->user()->preferredCategories()) {
+        if ($categories = $this->request->user()->preferred_categories) {
             $query = $this->categoriesFilter->apply($query, $categories);
         }
 
-        if ($sources = $this->request->user()->preferredSources()) {
+        if ($sources = $this->request->user()->preferred_sources) {
             $query = $this->sourcesFilter->apply($query, $sources);
         }
 

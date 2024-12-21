@@ -15,10 +15,7 @@
       public function apply(Builder $query, $value = null): Builder
       {
           $categories = $value ?? explode(',', $this->request->get('categories'));
-
-          foreach ($categories as $category) {
-              $query->orWhere('category', $category);
-          }
+          $query->whereIn('category', $categories);
 
           return $query;
       }
