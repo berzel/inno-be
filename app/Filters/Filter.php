@@ -9,9 +9,9 @@
   abstract class Filter
   {
       public function __construct(
-          protected Request $request
+          protected ?Request $request = null
       ) {
-
+          $this->request = $this->request ?? request();
       }
 
       public abstract function shouldApply(): bool;

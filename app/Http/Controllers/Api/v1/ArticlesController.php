@@ -6,6 +6,7 @@ use App\Filters\CategoryFilter;
 use App\Filters\DateFilter;
 use App\Filters\HasFilters;
 use App\Filters\KeywordFilter;
+use App\Filters\PersonalizedFeedFilter;
 use App\Filters\SourceFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ArticleResource;
@@ -22,6 +23,7 @@ class ArticlesController extends Controller
             DateFilter::class,
             SourceFilter::class,
             CategoryFilter::class,
+            PersonalizedFeedFilter::class,
         ];
 
         $query = Article::query();
