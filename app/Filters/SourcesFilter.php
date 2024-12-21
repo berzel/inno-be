@@ -14,7 +14,7 @@
 
       public function apply(Builder $query, $value = null): Builder
       {
-          $sources = $value ?? $this->request->get('sources');
+          $sources = $value ?? explode(',', $this->request->get('sources'));
 
           foreach ($sources as $category) {
               $query->orWhere('source', $category);
