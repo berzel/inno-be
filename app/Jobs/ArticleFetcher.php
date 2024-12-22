@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ArticleFetcher implements ShouldQueue
 {
@@ -20,6 +21,8 @@ class ArticleFetcher implements ShouldQueue
      * @var int
      */
     public int $backoff = 10;
+
+    public int $tries = 30;
 
     /**
      * Create a new job instance.
@@ -36,11 +39,19 @@ class ArticleFetcher implements ShouldQueue
      */
     public function handle(): void
     {
-        $articles = $this->api->fetchArticles($this->page)
-            ->filter(fn($item) => !Article::whereSlug($item['slug'])->exists())
-            ->toArray();
+        try {
+            $articles = $this->api->fetchArticles($this->page)
+                ->filter(fn($item) => !Article::whereSlug($item['slug'])->exists())
+                ->toArray();
 
-        DB::table('articles')->insert($articles);
+            DB::table('articles')->insert($articles);
+        } catch (\Throwable $th) {
+            Log::debug($th->getMessage());
+
+            $this->attempts() <= $this->tries
+                ? $this->release($this->backoff)
+                : $this->fail($th);
+        }
     }
 
     /**
