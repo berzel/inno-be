@@ -9,7 +9,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class ArticleFetcher implements ShouldQueue
 {
@@ -22,7 +21,7 @@ class ArticleFetcher implements ShouldQueue
      */
     public int $backoff = 10;
 
-    public int $tries = 30;
+    public int $tries = PHP_INT_MAX;
 
     /**
      * Create a new job instance.
@@ -46,9 +45,7 @@ class ArticleFetcher implements ShouldQueue
 
             DB::table('articles')->insert($articles);
         } catch (\Throwable $th) {
-            Log::debug($th->getMessage());
-
-            $this->attempts() <= $this->tries
+            $this->attempts() <= 30
                 ? $this->release($this->backoff)
                 : $this->fail($th);
         }
