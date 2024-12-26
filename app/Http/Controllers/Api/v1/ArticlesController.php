@@ -26,7 +26,7 @@ class ArticlesController extends Controller
             PersonalizedFeedFilter::class,
         ];
 
-        $query = Article::query();
+        $query = Article::query()->with(['category']);
         $query = $this->applyFilters($query, $filters);
         $articles = $query->paginate();
 
