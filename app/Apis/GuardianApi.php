@@ -69,7 +69,10 @@
                   'title' => $result['webTitle'],
                   'slug' => $result['id'],
                   'source' => 'the-guardian',
-                  'category' => $result['sectionId'],
+                  'category' => [
+                      'name' => $result['sectionName'],
+                      'slug' => $result['sectionId']
+                  ],
                   'created_at' => Carbon::parse($result['webPublicationDate']),
                   'updated_at' => Carbon::parse($result['webPublicationDate']),
               ];

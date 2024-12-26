@@ -7,6 +7,7 @@
   use Illuminate\Support\Collection;
   use Illuminate\Support\Facades\Http;
   use Illuminate\Support\Facades\Log;
+  use Illuminate\Support\Str;
 
   class NewYorkTimesApi implements NewsApi
   {
@@ -66,7 +67,10 @@
                   'title' => $result['headline']['main'],
                   'slug' => $result['_id'],
                   'source' => 'new-york-times',
-                  'category' => $result['section_name'],
+                  'category' => [
+                      'name' => $result['section_name'],
+                      'slug' => Str::slug($result['section_name']),
+                  ],
                   'created_at' => Carbon::parse($result['pub_date']),
                   'updated_at' => Carbon::parse($result['pub_date']),
               ];

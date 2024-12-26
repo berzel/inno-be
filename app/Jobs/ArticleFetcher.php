@@ -4,11 +4,13 @@ namespace App\Jobs;
 
 use App\Apis\NewsApi;
 use App\Models\Article;
+use App\Models\Category;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ArticleFetcher implements ShouldQueue
 {
@@ -41,6 +43,16 @@ class ArticleFetcher implements ShouldQueue
         try {
             $articles = $this->api->fetchArticles($this->page)
                 ->filter(fn($item) => !Article::whereSlug($item['slug'])->exists())
+                ->map(function ($item) {
+                    $category = Category::firstOrCreate([
+                        'slug' => $item['category']['slug'],
+                    ], $item['category']);
+
+                    $item['category_id'] = $category->id;
+                    unset($item['category']);
+
+                    return $item;
+                })
                 ->toArray();
 
             DB::table('articles')->insert($articles);
