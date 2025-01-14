@@ -54,7 +54,7 @@ class User extends Authenticatable
     protected function preferredCategories(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => explode(',', $value),
+            get: fn ($value) => is_string($value) ? explode(',', $value) : $value,
             set: fn ($value) => is_array($value) ? implode(',', $value) : $value,
         );
     }
@@ -62,7 +62,7 @@ class User extends Authenticatable
     protected function preferredSources(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => explode(',', $value),
+            get: fn ($value) => is_string($value) ? explode(',', $value) : $value,
             set: fn ($value) => is_array($value) ? implode(',', $value) : $value,
         );
     }
