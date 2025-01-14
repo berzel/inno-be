@@ -28,11 +28,10 @@ services:
             - mailpit
     frontend:
         build:
-            context: '../frontend'
+            context: '../inno-fe'
             dockerfile: Dockerfile
         ports:
             - '${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}'
-#            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         networks:
             - sail
     mysql:
