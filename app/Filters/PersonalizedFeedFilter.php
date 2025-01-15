@@ -18,7 +18,7 @@
 
       public function shouldApply(): bool
       {
-          return auth()->check() && !empty($this->request->get('personalized_feed'));
+          return auth('sanctum')->check() && !empty($this->request->get('personalized_feed'));
       }
 
       public function apply(Builder $query, $value = null): Builder
@@ -27,11 +27,11 @@
           return $query;
         }
 
-        if ($categories = $this->request->user()->preferred_categories) {
+        if ($categories = auth('sanctum')->user()->preferred_categories) {
             $query = $this->categoriesFilter->apply($query, $categories);
         }
 
-        if ($sources = $this->request->user()->preferred_sources) {
+        if ($sources = auth('sanctum')->user()->preferred_sources) {
             $query = $this->sourcesFilter->apply($query, $sources);
         }
 

@@ -15,7 +15,9 @@
       public function apply(Builder $query, $value = null): Builder
       {
           $categories = $value ?? explode(',', $this->request->get('categories'));
-          $query->whereIn('category', $categories);
+          $query->whereHas('category', function ($query) use ($categories) {
+              $query->whereIn('slug', $categories);
+          });
 
           return $query;
       }

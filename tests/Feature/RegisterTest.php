@@ -57,7 +57,6 @@ class RegisterTest extends TestCase
             'password_confirmation' => 'mismatch', // Password confirmation mismatch
         ];
 
-
         $response = $this->postJson('/api/v1/register', $data);
 
         $response->assertStatus(422);
